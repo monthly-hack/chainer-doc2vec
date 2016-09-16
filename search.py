@@ -5,14 +5,14 @@ import six
 n_result = 5  # number of search result to show
 
 
-with open('word2vec.model', 'r') as f:
+with open('doc2vec.model', 'r') as f:
     ss = f.readline().split()
     n_vocab, n_units = int(ss[0]), int(ss[1])
     word2index = {}
     index2word = {}
     w = numpy.empty((n_vocab, n_units), dtype=numpy.float32)
     for i, line in enumerate(f):
-        ss = line.split()
+        ss = line.split(',')
         assert len(ss) == n_units + 1
         word = ss[0]
         word2index[word] = i
