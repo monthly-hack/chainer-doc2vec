@@ -237,10 +237,15 @@ with open('sample_title.txt', 'r') as f:
             count += 1
         title.append(docs[doc])
 
-label = None
+len_label = 0
+for j in l_text:
+    len_label += j
+label = np.zeros((len_label,))
+cursor_label = 0
 for i, j in enumerate(l_text):
     tmp = np.broadcast_to(title[i], (j,))
-    label = np.concatenate([label, tmp]) if label is not None else tmp
+    label[cursor_label:cursor_label+j] = tmp
+    cursor_label += j
 
 index2word = {wid: word for word, wid in six.iteritems(vocab)}
 index2doc = {did: doc for doc, did in six.iteritems(docs)}
