@@ -41,7 +41,7 @@ parser.add_argument('--out', default='result',
 args = parser.parse_args()
 
 if args.gpu >= 0:
-    chainer.cuda.get_device(args.gpu).use()
+    chainer.cuda.get_device_from_id(args.gpu).use()
     cuda.check_cuda_available()
 
 print('GPU: {}'.format(args.gpu))
@@ -58,7 +58,7 @@ class DistributedMemory(chainer.Chain):
 
     def __init__(self, n_vocab, n_docs, n_units, loss_func):
         super(DistributedMemory, self).__init__(
-            embed=F.EmbedID(
+            embed=L.EmbedID(
                 n_vocab+n_docs, n_units, initialW=I.Uniform(1. / n_units)),
             loss_func=loss_func,
         )
@@ -67,7 +67,7 @@ class DistributedMemory(chainer.Chain):
         d = self.embed(doc)
         e = self.embed(context)
         h = F.sum(e, axis=1) + d
-        h = h * (1. / (context.data.shape[1] + 1))
+        h = h * (1. / (context.shape[1] + 1))
         loss = self.loss_func(h, x)
         reporter.report({'loss': loss}, self)
         return loss
@@ -77,14 +77,14 @@ class DistributedBoW(chainer.Chain):
 
     def __init__(self, n_vocab, n_docs, n_units, loss_func):
         super(DistributedBoW, self).__init__(
-            embed=F.EmbedID(
+            embed=L.EmbedID(
                 n_vocab+n_docs, n_units, initialW=I.Uniform(1. / n_units)),
             loss_func=loss_func,
         )
 
     def __call__(self, x, doc, context, train_word=True):
-        window = context.data.shape
-        shape = doc.data.shape
+        window = context.shape
+        shape = doc.shape
         d = F.broadcast_to(doc[:, None], (shape[0], window[1]))
         d = F.reshape(d, (shape[0] * window[1],))
         e = F.reshape(context, (shape[0] * window[1],))
@@ -105,7 +105,7 @@ class DM_DBoW(chainer.Chain):
 
     def __init__(self, n_vocab, n_docs, n_units, loss_func):
         super(DM_DBoW, self).__init__(
-            embed=F.EmbedID(
+            embed=L.EmbedID(
                 n_vocab+n_docs, n_units, initialW=I.Uniform(1. / n_units)),
             loss_func=loss_func,
         )
@@ -114,11 +114,11 @@ class DM_DBoW(chainer.Chain):
         d = self.embed(doc)
         e = self.embed(context)
         h = F.sum(e, axis=1) + d
-        h = h * (1. / (context.data.shape[1] + 1))
+        h = h * (1. / (context.shape[1] + 1))
         loss = self.loss_func(h, x)
 
-        window = context.data.shape
-        shape = doc.data.shape
+        window = context.shape
+        shape = doc.shape
         d = F.broadcast_to(doc[:, None], (shape[0], window[1]))
         d = F.reshape(d, (shape[0] * window[1],))
         e = F.reshape(context, (shape[0] * window[1],))
@@ -210,7 +210,7 @@ def convert(batch, device):
 
 
 if args.gpu >= 0:
-    cuda.get_device(args.gpu).use()
+    cuda.get_device_from_id(args.gpu).use()
 
 with open('sample_text.txt', 'r') as f:
     text = []
